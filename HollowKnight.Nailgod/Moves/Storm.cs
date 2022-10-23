@@ -25,11 +25,12 @@ public class Storm
         fsm.AddAction("Storm/Show", fsm.CreateTk2dPlayAnimation(fsm.gameObject, "Charge Ground"));
         var dSlashEffect = sly.transform.Find("DSlash Effect");
         var stormSlashEffect = UnityEngine.Object.Instantiate(dSlashEffect, sly.transform);
-        stormSlashEffect.name = "Storm/Slash/Effect";
+        stormSlashEffect.name = "Storm Slash Effect";
         stormSlashEffect.localPosition = new Vector3(-1.03f, -1.1738f, -0.0009f);
         fsm.AddCustomAction("Stun Reset", () =>
         {
-            sly.transform.Find("Storm/Slash/Effect").gameObject.SetActive(false);
+            sly.transform.Find("Storm Slash Effect").gameObject.SetActive(false);
+            sly.transform.Find("Sharp Flash").gameObject.SetActive(false);
         });
         fsm.AddCustomAction("Storm/Show", () =>
         {
@@ -66,8 +67,8 @@ public class Storm
             sly.transform.position = new Vector3(x, y, 0.0061f);
             sly.transform.rotation = Quaternion.identity;
             sly.transform.Find("NA Charge").gameObject.SetActive(true);
-            sly.transform.Find("NA Charged").gameObject.SetActive(false);
-            sly.transform.Find("Storm/Slash/Effect").gameObject.SetActive(false);
+            sly.transform.Find("Storm Slash Effect").gameObject.SetActive(false);
+            sly.transform.Find("Sharp Flash").gameObject.SetActive(false);
             sly.GetComponent<Rigidbody2D>().gravityScale = 3;
         });
         fsm.AddAction("Storm/Show", fsm.CreateGeneralAction(() =>
@@ -136,7 +137,7 @@ public class Storm
                 sly.transform.localScale = new Vector3(1, 1, 1);
             }
             var v = hero.transform.position - sly.transform.position;
-            v = v.normalized * 8;
+            v = v.normalized * 64;
             sly.GetComponent<Rigidbody2D>().velocity = v;
             float a = (float)Math.Atan2(v.y, v.x);
             if (sly.transform.localScale.x > 0)
@@ -150,14 +151,11 @@ public class Storm
             a = a / (float)Math.PI * 180;
             sly.transform.rotation = Quaternion.Euler(0, 0, a);
             sly.GetComponent<Rigidbody2D>().gravityScale = 0;
-            sly.transform.Find("NA Charge").gameObject.SetActive(false);
             sly.transform.Find("NA Charged").gameObject.SetActive(false);
-            sly.transform.Find("Storm/Slash/Effect").gameObject.SetActive(true);
+            sly.transform.Find("Storm Slash Effect").gameObject.SetActive(true);
+            sly.transform.Find("Sharp Flash").gameObject.SetActive(true);
         });
-        fsm.AddAction("Storm/Slash", fsm.CreateGeneralAction(() =>
-        {
-        }));
-        fsm.AddAction("Storm/Slash", fsm.CreateWait(0.5f, fsm.GetFSMEvent("FINISHED")));
+        fsm.AddAction("Storm/Slash", fsm.CreateWait(0.25f, fsm.GetFSMEvent("FINISHED")));
         fsm.AddTransition("Storm/Slash", "FINISHED", "Storm/Hide");
     }
 }
