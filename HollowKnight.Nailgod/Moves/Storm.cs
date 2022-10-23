@@ -5,26 +5,6 @@ public class Storm
     {
         var sly = fsm.gameObject;
         var hero = HeroController.instance.gameObject;
-        fsm.AddState("Storm/Start");
-        fsm.AddState("Storm/Hide");
-        fsm.AddState("Storm/Show");
-        fsm.AddState("Storm/Charged");
-        fsm.AddState("Storm/Slash");
-        fsm.AddState("Storm/Bounce");
-        fsm.AddCustomAction("Storm/Start", () =>
-        {
-            sly.LocateMyFSM("Stun Control").SendEvent("STUN CONTROL STOP");
-            fsm.AccessIntVariable("Storm/Show/LastDirection").Value = 0;
-            fsm.AccessBoolVariable("Storm/Show/First").Value = true;
-        });
-        fsm.AddTransition("Storm/Start", "FINISHED", "Storm/Hide");
-        fsm.AddCustomAction("Storm/Hide", () =>
-        {
-            sly.transform.position = Vector3.zero;
-        });
-        fsm.AddAction("Storm/Hide", fsm.CreateWait(0.5f, fsm.GetFSMEvent("FINISHED")));
-        fsm.AddTransition("Storm/Hide", "FINISHED", "Storm/Show");
-        fsm.AddAction("Storm/Show", fsm.CreateTk2dPlayAnimation(fsm.gameObject, "Charge Ground"));
         var dSlashEffect = sly.transform.Find("DSlash Effect");
         var stormSlashEffect = UnityEngine.Object.Instantiate(dSlashEffect, sly.transform);
         stormSlashEffect.name = "Storm Slash Effect";
@@ -49,6 +29,36 @@ public class Storm
             sly.transform.Find("Storm Slash Bottom").gameObject.SetActive(false);
             sly.transform.Find("Storm Slash Top").gameObject.SetActive(false);
         });
+        fsm.AddState("Storm/Start");
+        fsm.AddState("Storm/Jump");
+        fsm.AddState("Storm/Hide");
+        fsm.AddState("Storm/Show");
+        fsm.AddState("Storm/Charged");
+        fsm.AddState("Storm/Slash");
+        fsm.AddState("Storm/Bounce");
+        fsm.AddCustomAction("Storm/Start", () =>
+        {
+            sly.LocateMyFSM("Stun Control").SendEvent("STUN CONTROL STOP");
+            fsm.AccessIntVariable("Storm/Show/LastDirection").Value = 0;
+            fsm.AccessBoolVariable("Storm/Show/First").Value = true;
+        });
+        fsm.AddTransition("Storm/Start", "FINISHED", "Storm/Jump");
+        fsm.AddAction("Storm/Jump", fsm.CreateTk2dPlayAnimation(fsm.gameObject, "Jump"));
+        fsm.AddAction("Storm/Jump", fsm.GetAction("Air Roar", 6));
+        fsm.AddCustomAction("Storm/Jump", () =>
+        {
+            sly.GetComponent<Rigidbody2D>().velocity = new Vector3(0, 32, 0);
+            sly.GetComponent<Rigidbody2D>().gravityScale = 1;
+        });
+        fsm.AddAction("Storm/Jump", fsm.CreateWait(0.5f, fsm.GetFSMEvent("FINISHED")));
+        fsm.AddTransition("Storm/Jump", "FINISHED", "Storm/Show");
+        fsm.AddCustomAction("Storm/Hide", () =>
+        {
+            sly.transform.position = Vector3.zero;
+        });
+        fsm.AddAction("Storm/Hide", fsm.CreateWait(0.5f, fsm.GetFSMEvent("FINISHED")));
+        fsm.AddTransition("Storm/Hide", "FINISHED", "Storm/Show");
+        fsm.AddAction("Storm/Show", fsm.CreateTk2dPlayAnimation(fsm.gameObject, "Charge Ground"));
         fsm.AddAction("Storm/Show", fsm.GetAction("Dash Charge", 2));
         fsm.AddCustomAction("Storm/Show", () =>
         {
@@ -75,11 +85,11 @@ public class Storm
                 {
                     continue;
                 }
-                if (Math.Abs(x - hero.transform.position.x) < 4 && c<16)
+                if (Math.Abs(x - hero.transform.position.x) < 4 && c < 16)
                 {
                     continue;
                 }
-                if (Math.Abs(y - hero.transform.position.y) < 4 && c<16)
+                if (Math.Abs(y - hero.transform.position.y) < 4 && c < 16)
                 {
                     continue;
                 }
@@ -95,8 +105,6 @@ public class Storm
             if (fsm.AccessBoolVariable("Storm/Show/First").Value)
             {
                 fsm.AccessBoolVariable("Storm/Show/First").Value = false;
-                sly.transform.position = new Vector3(x, y, 0.0061f);
-                Nailgod.nailgod.Log("first");
             }
             else
             {
