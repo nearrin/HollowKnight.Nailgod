@@ -26,8 +26,9 @@ public class Storm
         var dSlashEffect = sly.transform.Find("DSlash Effect");
         var stormSlashEffect = UnityEngine.Object.Instantiate(dSlashEffect, sly.transform);
         stormSlashEffect.name = "Storm Slash Effect";
-        stormSlashEffect.localPosition = new Vector3(-1.03f, -1.1738f, -0.0009f);
+        stormSlashEffect.localPosition = new Vector3(1.5f, 0.85f, -0.0009f);
         stormSlashEffect.localScale = new Vector3(1, 0.6319f, 1.2047f);
+        stormSlashEffect.rotation = Quaternion.Euler(0, 0, 180);
         fsm.AddCustomAction("Stun Reset", () =>
         {
             sly.transform.Find("Storm Slash Effect").gameObject.SetActive(false);
@@ -143,7 +144,7 @@ public class Storm
             v = v.normalized * 64;
             sly.GetComponent<Rigidbody2D>().velocity = v;
             float a = (float)Math.Atan2(v.y, v.x);
-            if (sly.transform.localScale.x > 0)
+            if (sly.transform.localScale.x < 0)
             {
                 a += (float)Math.PI;
                 if (a > Math.PI)
