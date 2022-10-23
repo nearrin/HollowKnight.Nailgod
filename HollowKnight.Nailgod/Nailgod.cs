@@ -17,7 +17,9 @@ public class Nailgod : Mod, IGlobalSettings<Settings>, IMenuMod
     public override string GetVersion() => "1.0.0.0";
     public override List<(string, string)> GetPreloadNames()
     {
-        return new List<(string, string)> { };
+        return new List<(string, string)> {
+            ("GG_Radiance","Boss Control")
+        };
     }
     public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
     {
@@ -32,6 +34,7 @@ public class Nailgod : Mod, IGlobalSettings<Settings>, IMenuMod
         memoryStream.Close();
         skin = new(0, 0);
         skin.LoadImage(bytes, true);
+        storm.Initialize(preloadedObjects);
     }
     public void OnLoadGlobal(Settings settings) => settings_ = settings;
     public Settings OnSaveGlobal() => settings_;
@@ -120,13 +123,22 @@ public class Nailgod : Mod, IGlobalSettings<Settings>, IMenuMod
             onEnable(fsm);
             return;
         }
-        if (fsm.gameObject.scene.name == "GG_Sly" && fsm.gameObject.name == "Sly Boss" && fsm.FsmName == "Control")
+        var gameObject = fsm.gameObject;
+        if (gameObject.scene.name == "GG_Sly" && gameObject.name == "Sly Boss" && fsm.FsmName == "Control")
         {
             fsm.InsertCustomAction("Idle", () =>
             {
                 fsm.SetState("Storm/Start");
             }, 0);
             storm.UpdateFSM(fsm);
+        }
+        if (gameObject.scene.name == "GG_Sly" && gameObject.name.StartsWith("Radiant Spike") && fsm.FsmName == "Hero Saver")
+        {
+            fsm.InsertCustomAction("Send", () =>
+            {
+                HeroController.instance.damageMode = GlobalEnums.DamageMode.FULL_DAMAGE;
+                fsm.SendEvent("FINISHED");
+            }, 0);
         }
         onEnable(fsm);
     }

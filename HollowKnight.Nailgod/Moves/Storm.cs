@@ -1,6 +1,15 @@
 ﻿namespace Nailgod;
 public class Storm
 {
+    GameObject radiantSpikeTemplate;
+    List<GameObject> radiantSpikes;
+    public void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
+    {
+        var bossControl = preloadedObjects["GG_Radiance"]["Boss Control"];
+        var spikeControl = bossControl.transform.Find("Spike Control").gameObject;
+        var farL = spikeControl.transform.Find("Far L").gameObject;
+        radiantSpikeTemplate = farL.transform.Find("Radiant Spike").gameObject;
+    }
     public void UpdateFSM(PlayMakerFSM fsm)
     {
         var sly = fsm.gameObject;
@@ -22,6 +31,12 @@ public class Storm
         stormSlashTop.localPosition = new Vector3(-5.5f, 0.25f, 0);
         stormSlashTop.localScale = new Vector3(-0.5f, 3, 1);
         stormSlashTop.rotation = Quaternion.Euler(0, 0, 270);
+        radiantSpikes = new List<GameObject>();
+        for (int x = 34; x <= 59; ++x)
+        {
+            var radiantSpike=UnityEngine.Object.Instantiate(radiantSpikeTemplate, new Vector3(x, 5.2f, -0.001f), Quaternion.identity);
+            radiantSpikes.Add(radiantSpike);
+        }
         fsm.AddState("Storm/Start");
         fsm.AddState("Storm/Jump");
         fsm.AddState("Storm/Hide");
@@ -32,14 +47,18 @@ public class Storm
         fsm.AddState("Storm/End");
         fsm.AddCustomAction("Storm/Start", () =>
         {
-            fsm.AccessIntVariable("Storm/Phase1/Count").Value = 4;
+            fsm.AccessIntVariable("Storm/Phase1/Count").Value = 16;
             fsm.AccessFloatVariable("Storm/Phase1/DelayStart").Value = 1;
-            fsm.AccessFloatVariable("Storm/Phase1/DelayEnd").Value = 0.1f;
+            fsm.AccessFloatVariable("Storm/Phase1/DelayEnd").Value = 0.02f;
             fsm.AccessIntVariable("Storm/Phase2/Count").Value = 2;
             fsm.AccessIntVariable("Storm/Count").Value = 0;
             fsm.AccessIntVariable("Storm/Show/LastDirection").Value = 0;
             fsm.AccessBoolVariable("Storm/Show/First").Value = true;
             sly.LocateMyFSM("Stun Control").SendEvent("STUN CONTROL STOP");
+            foreach(var radiantSpike in radiantSpikes)
+            {
+                radiantSpike.LocateMyFSM("Control").SendEvent("UP");
+            }
         });
         fsm.AddTransition("Storm/Start", "FINISHED", "Storm/Jump");
         fsm.AddAction("Storm/Jump", fsm.CreateTk2dPlayAnimation(fsm.gameObject, "Jump"));
@@ -59,23 +78,33 @@ public class Storm
             if (count < fsm.AccessIntVariable("Storm/Phase1/Count").Value)
             {
                 sly.transform.position = Vector3.zero;
+                var delayStart = fsm.AccessFloatVariable("Storm/Phase1/DelayStart").Value;
+                var delayEnd = fsm.AccessFloatVariable("Storm/Phase1/DelayEnd").Value;
+                var delay = delayStart + (delayEnd - delayStart) * count / (fsm.AccessIntVariable("Storm/Phase1/Count").Value - 1);
+                fsm.GetAction<Wait>("Storm/Hide", 1).time = delay;
             }
             else if (count < fsm.AccessIntVariable("Storm/Phase1/Count").Value + fsm.AccessIntVariable("Storm/Phase2/Count").Value)
             {
                 sly.transform.position = Vector3.zero;
+                fsm.GetAction<Wait>("Storm/Hide", 1).time = 1;
             }
             else
             {
                 sly.transform.rotation = Quaternion.identity;
+                sly.GetComponent<Rigidbody2D>().gravityScale = 3;
                 sly.transform.Find("Storm Slash Effect").gameObject.SetActive(false);
                 sly.transform.Find("Sharp Flash").gameObject.SetActive(false);
                 sly.transform.Find("Storm Slash Bottom").gameObject.SetActive(false);
                 sly.transform.Find("Storm Slash Top").gameObject.SetActive(false);
                 sly.LocateMyFSM("Stun Control").SendEvent("STUN CONTROL START");
+                foreach (var radiantSpike in radiantSpikes)
+                {
+                    radiantSpike.LocateMyFSM("Control").SendEvent("DOWN");
+                }
                 fsm.SetState("Storm/End");
             }
         });
-        fsm.AddAction("Storm/Hide", fsm.CreateWait(0.5f, fsm.GetFSMEvent("FINISHED")));
+        fsm.AddAction("Storm/Hide", fsm.CreateWait(0, fsm.GetFSMEvent("FINISHED")));
         fsm.AddTransition("Storm/Hide", "FINISHED", "Storm/Show");
         fsm.AddAction("Storm/Show", fsm.CreateTk2dPlayAnimation(fsm.gameObject, "Charge Ground"));
         fsm.AddAction("Storm/Show", fsm.GetAction("Dash Charge", 2));
@@ -84,7 +113,7 @@ public class Storm
             sly.GetComponent<Rigidbody2D>().velocity = Vector3.zero;
             var xMin = 34f;
             var xMax = 59f;
-            var yMin = 11.5f;
+            var yMin = 7f;
             var yMax = 16f;
             var hero = HeroController.instance.gameObject;
             xMin = Math.Max(xMin, hero.transform.position.x - 12.5f);
@@ -130,12 +159,12 @@ public class Storm
                 sly.transform.position = new Vector3(x, y, 0.0061f);
             }
             sly.transform.rotation = Quaternion.identity;
+            sly.GetComponent<Rigidbody2D>().gravityScale = 3;
             sly.transform.Find("NA Charge").gameObject.SetActive(true);
             sly.transform.Find("Storm Slash Effect").gameObject.SetActive(false);
             sly.transform.Find("Sharp Flash").gameObject.SetActive(false);
             sly.transform.Find("Storm Slash Bottom").gameObject.SetActive(false);
             sly.transform.Find("Storm Slash Top").gameObject.SetActive(false);
-            sly.GetComponent<Rigidbody2D>().gravityScale = 3;
         });
         fsm.AddAction("Storm/Show", fsm.CreateGeneralAction(() =>
         {
@@ -242,6 +271,6 @@ public class Storm
         fsm.AddAction("Storm/End", fsm.CreateTk2dPlayAnimation(fsm.gameObject, "Jump"));
         fsm.AddAction("Storm/End", fsm.CreateCheckCollisionSide(null, null, fsm.GetFSMEvent("LAND")));
         fsm.AddAction("Storm/End", fsm.CreateCheckCollisionSideEnter(null, null, fsm.GetFSMEvent("LAND")));
-        fsm.AddTransition("Storm/End", "LAND", "Distance");
+        fsm.AddTransition("Storm/End", "LAND", "Evade Antic");
     }
 }
