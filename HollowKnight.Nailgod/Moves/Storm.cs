@@ -27,6 +27,7 @@ public class Storm
         var stormSlashEffect = UnityEngine.Object.Instantiate(dSlashEffect, sly.transform);
         stormSlashEffect.name = "Storm Slash Effect";
         stormSlashEffect.localPosition = new Vector3(-1.03f, -1.1738f, -0.0009f);
+        stormSlashEffect.localScale = new Vector3(1, 0.6319f, 1.2047f);
         fsm.AddCustomAction("Stun Reset", () =>
         {
             sly.transform.Find("Storm Slash Effect").gameObject.SetActive(false);
@@ -43,8 +44,10 @@ public class Storm
             xMin = Math.Max(xMin, hero.transform.position.x - 12.5f);
             xMax = Math.Min(xMax, hero.transform.position.x + 12.5f);
             float x, y;
+            var c = 0;
             while (true)
             {
+                c += 1;
                 x = UnityEngine.Random.Range(xMin, xMax);
                 y = UnityEngine.Random.Range(yMin, yMax);
                 if (Math.Abs(x - hero.transform.position.x) < 4)
@@ -56,7 +59,7 @@ public class Storm
                     continue;
                 }
                 var lD = fsm.AccessIntVariable("Storm/Show/LastDirection").Value;
-                if (lD * (x - hero.transform.position.x) > 0)
+                if (lD * (x - hero.transform.position.x) > 0 && c < 16)
                 {
                     continue;
                 }
@@ -155,7 +158,15 @@ public class Storm
             sly.transform.Find("Storm Slash Effect").gameObject.SetActive(true);
             sly.transform.Find("Sharp Flash").gameObject.SetActive(true);
         });
-        fsm.AddAction("Storm/Slash", fsm.CreateWait(0.25f, fsm.GetFSMEvent("FINISHED")));
-        fsm.AddTransition("Storm/Slash", "FINISHED", "Storm/Hide");
+        fsm.AddAction("Storm/Slash", fsm.CreateGeneralAction(() =>
+        {
+            if (sly.transform.position.y > 17)
+            {
+                fsm.SendEvent("CANCEL");
+            }
+        }));
+        fsm.AddAction("Storm/Slash", fsm.CreateCheckCollisionSide(fsm.GetFSMEvent("CANCEL"), fsm.GetFSMEvent("CANCEL"), fsm.GetFSMEvent("CANCEL")));
+        fsm.AddAction("Storm/Slash", fsm.CreateCheckCollisionSideEnter(fsm.GetFSMEvent("CANCEL"), fsm.GetFSMEvent("CANCEL"), fsm.GetFSMEvent("CANCEL")));
+        fsm.AddTransition("Storm/Slash", "CANCEL", "Storm/Hide");
     }
 }
