@@ -15,6 +15,7 @@ public class Storm
         {
             sly.LocateMyFSM("Stun Control").SendEvent("STUN CONTROL STOP");
             fsm.AccessIntVariable("Storm/Show/LastDirection").Value = 0;
+            fsm.AccessBoolVariable("Storm/Show/First").Value = true;
         });
         fsm.AddTransition("Storm/Start", "FINISHED", "Storm/Hide");
         fsm.AddCustomAction("Storm/Hide", () =>
@@ -48,6 +49,7 @@ public class Storm
             sly.transform.Find("Storm Slash Bottom").gameObject.SetActive(false);
             sly.transform.Find("Storm Slash Top").gameObject.SetActive(false);
         });
+        fsm.AddAction("Storm/Show", fsm.GetAction("Dash Charge", 2));
         fsm.AddCustomAction("Storm/Show", () =>
         {
             sly.GetComponent<Rigidbody2D>().velocity = Vector3.zero;
@@ -90,7 +92,16 @@ public class Storm
                 fsm.AccessIntVariable("Storm/Show/LastDirection").Value = lD;
                 break;
             }
-            sly.transform.position = new Vector3(x, y, 0.0061f);
+            if (fsm.AccessBoolVariable("Storm/Show/First").Value)
+            {
+                fsm.AccessBoolVariable("Storm/Show/First").Value = false;
+                sly.transform.position = new Vector3(x, y, 0.0061f);
+                Nailgod.nailgod.Log("first");
+            }
+            else
+            {
+                sly.transform.position = new Vector3(x, y, 0.0061f);
+            }
             sly.transform.rotation = Quaternion.identity;
             sly.transform.Find("NA Charge").gameObject.SetActive(true);
             sly.transform.Find("Storm Slash Effect").gameObject.SetActive(false);
@@ -115,6 +126,7 @@ public class Storm
         fsm.AddAction("Storm/Show", fsm.CreateWait(0.1f, fsm.GetFSMEvent("FINISHED")));
         fsm.AddTransition("Storm/Show", "FINISHED", "Storm/Charged");
         fsm.AddAction("Storm/Charged", fsm.CreateTk2dPlayAnimation(fsm.gameObject, "Dash"));
+        fsm.AddAction("Storm/Charged", fsm.GetAction("Dash Charged", 1));
         fsm.AddCustomAction("Storm/Charged", () =>
         {
             sly.transform.Find("NA Charge").gameObject.SetActive(false);
@@ -154,6 +166,7 @@ public class Storm
         }));
         fsm.AddAction("Storm/Charged", fsm.CreateWait(0.1f, fsm.GetFSMEvent("FINISHED")));
         fsm.AddTransition("Storm/Charged", "FINISHED", "Storm/Slash");
+        fsm.AddAction("Storm/Slash", fsm.GetAction("Slash S1", 1));
         fsm.AddAction("Storm/Slash", fsm.GetAction("D Slash S1", 1));
         fsm.AddCustomAction("Storm/Slash", () =>
         {
