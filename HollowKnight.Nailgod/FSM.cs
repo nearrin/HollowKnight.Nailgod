@@ -102,6 +102,21 @@ public static class FSM
         };
         return checkCollisionSideEnter;
     }
+    public static Tk2dPlayAnimation CreateTk2dPlayAnimation(this PlayMakerFSM fsm, GameObject gameObject, string clip)
+    {
+        var fsmOwnerDefault = new FsmOwnerDefault
+        {
+            OwnerOption = OwnerDefaultOption.SpecifyGameObject,
+            GameObject = gameObject,
+        };
+        var tk2DPlayAnimation = new Tk2dPlayAnimation()
+        {
+            gameObject = fsmOwnerDefault,
+            animLibName = "",
+            clipName = clip,
+        };
+        return tk2DPlayAnimation;
+    }
     public static GeneralAction CreateGeneralAction(this PlayMakerFSM fsm, Action action)
     {
         return new GeneralAction()

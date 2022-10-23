@@ -54,6 +54,10 @@ public class Nailgod : Mod, IGlobalSettings<Settings>, IMenuMod
     }
     private void ActiveSceneChanged(UnityEngine.SceneManagement.Scene previous, UnityEngine.SceneManagement.Scene current)
     {
+        if (!settings_.on)
+        {
+            return;
+        }
         if (current.name == "GG_Sly")
         {
             var slyBoss = GameObject.Find("Sly Boss").gameObject;
@@ -100,6 +104,10 @@ public class Nailgod : Mod, IGlobalSettings<Settings>, IMenuMod
     }
     private void HeroUpdateHook()
     {
+        if (!settings_.on)
+        {
+            return;
+        }
         if (Input.GetKeyDown(KeyCode.F4))
         {
             UnityEngine.SceneManagement.SceneManager.LoadScene("GG_Sly");
@@ -107,6 +115,11 @@ public class Nailgod : Mod, IGlobalSettings<Settings>, IMenuMod
     }
     private void PlayMakerFSMOnEnable(On.PlayMakerFSM.orig_OnEnable onEnable, PlayMakerFSM fsm)
     {
+        if (!settings_.on)
+        {
+            onEnable(fsm);
+            return;
+        }
         if (fsm.gameObject.scene.name == "GG_Sly" && fsm.gameObject.name == "Sly Boss" && fsm.FsmName == "Control")
         {
             fsm.InsertCustomAction("Idle", () =>
