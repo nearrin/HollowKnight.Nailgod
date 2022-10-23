@@ -22,13 +22,6 @@ public class Storm
         stormSlashTop.localPosition = new Vector3(-5.5f, 0.25f, 0);
         stormSlashTop.localScale = new Vector3(-0.5f, 3, 1);
         stormSlashTop.rotation = Quaternion.Euler(0, 0, 270);
-        fsm.AddCustomAction("Stun Reset", () =>
-        {
-            sly.transform.Find("Storm Slash Effect").gameObject.SetActive(false);
-            sly.transform.Find("Sharp Flash").gameObject.SetActive(false);
-            sly.transform.Find("Storm Slash Bottom").gameObject.SetActive(false);
-            sly.transform.Find("Storm Slash Top").gameObject.SetActive(false);
-        });
         fsm.AddState("Storm/Start");
         fsm.AddState("Storm/Jump");
         fsm.AddState("Storm/Hide");
@@ -36,11 +29,17 @@ public class Storm
         fsm.AddState("Storm/Charged");
         fsm.AddState("Storm/Slash");
         fsm.AddState("Storm/Bounce");
+        fsm.AddState("Storm/End");
         fsm.AddCustomAction("Storm/Start", () =>
         {
-            sly.LocateMyFSM("Stun Control").SendEvent("STUN CONTROL STOP");
+            fsm.AccessIntVariable("Storm/Phase1/Count").Value = 4;
+            fsm.AccessFloatVariable("Storm/Phase1/DelayStart").Value = 1;
+            fsm.AccessFloatVariable("Storm/Phase1/DelayEnd").Value = 0.1f;
+            fsm.AccessIntVariable("Storm/Phase2/Count").Value = 2;
+            fsm.AccessIntVariable("Storm/Count").Value = 0;
             fsm.AccessIntVariable("Storm/Show/LastDirection").Value = 0;
             fsm.AccessBoolVariable("Storm/Show/First").Value = true;
+            sly.LocateMyFSM("Stun Control").SendEvent("STUN CONTROL STOP");
         });
         fsm.AddTransition("Storm/Start", "FINISHED", "Storm/Jump");
         fsm.AddAction("Storm/Jump", fsm.CreateTk2dPlayAnimation(fsm.gameObject, "Jump"));
@@ -54,7 +53,27 @@ public class Storm
         fsm.AddTransition("Storm/Jump", "FINISHED", "Storm/Show");
         fsm.AddCustomAction("Storm/Hide", () =>
         {
-            sly.transform.position = Vector3.zero;
+            sly.GetComponent<Rigidbody2D>().velocity = Vector3.zero;
+            fsm.AccessIntVariable("Storm/Count").Value += 1;
+            var count = fsm.AccessIntVariable("Storm/Count").Value;
+            if (count < fsm.AccessIntVariable("Storm/Phase1/Count").Value)
+            {
+                sly.transform.position = Vector3.zero;
+            }
+            else if (count < fsm.AccessIntVariable("Storm/Phase1/Count").Value + fsm.AccessIntVariable("Storm/Phase2/Count").Value)
+            {
+                sly.transform.position = Vector3.zero;
+            }
+            else
+            {
+                sly.transform.rotation = Quaternion.identity;
+                sly.transform.Find("Storm Slash Effect").gameObject.SetActive(false);
+                sly.transform.Find("Sharp Flash").gameObject.SetActive(false);
+                sly.transform.Find("Storm Slash Bottom").gameObject.SetActive(false);
+                sly.transform.Find("Storm Slash Top").gameObject.SetActive(false);
+                sly.LocateMyFSM("Stun Control").SendEvent("STUN CONTROL START");
+                fsm.SetState("Storm/End");
+            }
         });
         fsm.AddAction("Storm/Hide", fsm.CreateWait(0.5f, fsm.GetFSMEvent("FINISHED")));
         fsm.AddTransition("Storm/Hide", "FINISHED", "Storm/Show");
@@ -220,5 +239,9 @@ public class Storm
         fsm.AddTransition("Storm/Slash", "CANCEL", "Storm/Bounce");
         fsm.AddAction("Storm/Bounce", fsm.GetAction("Bounce L", 1));
         fsm.AddTransition("Storm/Bounce", "FINISHED", "Storm/Hide");
+        fsm.AddAction("Storm/End", fsm.CreateTk2dPlayAnimation(fsm.gameObject, "Jump"));
+        fsm.AddAction("Storm/End", fsm.CreateCheckCollisionSide(null, null, fsm.GetFSMEvent("LAND")));
+        fsm.AddAction("Storm/End", fsm.CreateCheckCollisionSideEnter(null, null, fsm.GetFSMEvent("LAND")));
+        fsm.AddTransition("Storm/End", "LAND", "Distance");
     }
 }
