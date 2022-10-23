@@ -50,7 +50,7 @@ public class Storm
             fsm.AccessIntVariable("Storm/Phase1/Count").Value = 16;
             fsm.AccessFloatVariable("Storm/Phase1/DelayStart").Value = 1;
             fsm.AccessFloatVariable("Storm/Phase1/DelayEnd").Value = 0.02f;
-            fsm.AccessIntVariable("Storm/Phase2/Count").Value = 2;
+            fsm.AccessIntVariable("Storm/Phase2/Count").Value = 0;
             fsm.AccessIntVariable("Storm/Count").Value = 0;
             fsm.AccessIntVariable("Storm/Show/LastDirection").Value = 0;
             fsm.AccessBoolVariable("Storm/Show/First").Value = true;
