@@ -34,7 +34,7 @@ public class Storm
         radiantSpikes = new List<GameObject>();
         for (int x = 34; x <= 59; ++x)
         {
-            var radiantSpike=UnityEngine.Object.Instantiate(radiantSpikeTemplate, new Vector3(x, 5.2f, -0.001f), Quaternion.identity);
+            var radiantSpike = UnityEngine.Object.Instantiate(radiantSpikeTemplate, new Vector3(x, 5.2f, -0.001f), Quaternion.identity);
             radiantSpikes.Add(radiantSpike);
         }
         fsm.AddState("Storm/Start");
@@ -55,7 +55,7 @@ public class Storm
             fsm.AccessIntVariable("Storm/Show/LastDirection").Value = 0;
             fsm.AccessBoolVariable("Storm/Show/First").Value = true;
             sly.LocateMyFSM("Stun Control").SendEvent("STUN CONTROL STOP");
-            foreach(var radiantSpike in radiantSpikes)
+            foreach (var radiantSpike in radiantSpikes)
             {
                 radiantSpike.LocateMyFSM("Control").SendEvent("UP");
             }
